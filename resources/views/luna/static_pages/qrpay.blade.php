@@ -39,9 +39,12 @@
                                 {{ __('dujiaoka.amount_to_be_paid') }}
                                 : {{ __('dujiaoka.money_symbol') }}{{ $actual_price }}
                             </p>
-                            <img
-                                src="data:image/png;base64,{!! base64_encode(QrCode::format('png')->size(200)->generate($qr_code)) !!}"
-                                alt="">
+                            @if(isset($qr_code_img))
+                            <img src="{{ $qr_code_img }}" alt="{{ __('dujiaoka.scan_qrcode_to_pay') }}"
+                                 srcset="">
+                            @else
+                            <img src="data:image/png;base64,{!! base64_encode(QrCode::format('png')->size(200)->generate($qr_code)) !!}" alt="{{ __('dujiaoka.scan_qrcode_to_pay') }}" srcset="">
+                            @endif
                             @if(Agent::isMobile() && isset($jump_payuri))
                                 <p class="btn" style="margin-bottom: 20px"><a
                                         href="{{ $jump_payuri }}">{{ __('dujiaoka.open_the_app_to_pay') }}</a></p>

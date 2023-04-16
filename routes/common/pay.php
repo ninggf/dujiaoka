@@ -52,5 +52,8 @@ Route::group(['prefix' => 'pay', 'namespace' => 'Pay', 'middleware' => ['dujiaok
     Route::get('epusdt/{payway}/{orderSN}', 'EpusdtController@gateway');
     Route::post('epusdt/notify_url', 'EpusdtController@notifyUrl');
     Route::get('epusdt/return_url', 'EpusdtController@returnUrl')->name('epusdt-return');
-
+    // 虎皮椒
+    Route::get('xunhupay/{payway}/{orderSN}', 'XunhupayController@gateway');
+    Route::post('xunhupay/notify_url', 'XunhupayController@notifyUrl');
+    Route::get('xunhupay/return_url', 'XunhupayController@returnUrl')->name('epusdt-return');
 });
