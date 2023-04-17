@@ -6,6 +6,7 @@
  * @copyright assimon<ashang@utf8.hk>
  * @link      http://utf8.hk/
  */
+
 use Illuminate\Support\Facades\Route;
 
 Route::get('pay-gateway/{handle}/{payway}/{orderSN}', 'PayController@redirectGateway');
@@ -41,10 +42,10 @@ Route::group(['prefix' => 'pay', 'namespace' => 'Pay', 'middleware' => ['dujiaok
     Route::get('vpay/notify_url', 'VpayController@notifyUrl');
     Route::get('vpay/return_url', 'VpayController@returnUrl')->name('vpay-return');
     // stripe
-    Route::get('stripe/{payway}/{oid}','StripeController@gateway');
-    Route::get('stripe/return_url','StripeController@returnUrl');
-    Route::get('stripe/check','StripeController@check');
-    Route::get('stripe/charge','StripeController@charge');
+    Route::get('stripe/{payway}/{oid}', 'StripeController@gateway');
+    Route::get('stripe/return_url', 'StripeController@returnUrl');
+    Route::get('stripe/check', 'StripeController@check');
+    Route::get('stripe/charge', 'StripeController@charge');
     // Coinbase
     Route::get('coinbase/{payway}/{orderSN}', 'CoinbaseController@gateway');
     Route::post('coinbase/notify_url', 'CoinbaseController@notifyUrl');
@@ -55,5 +56,9 @@ Route::group(['prefix' => 'pay', 'namespace' => 'Pay', 'middleware' => ['dujiaok
     // 虎皮椒
     Route::get('xunhupay/{payway}/{orderSN}', 'XunhupayController@gateway');
     Route::post('xunhupay/notify_url', 'XunhupayController@notifyUrl');
-    Route::get('xunhupay/return_url', 'XunhupayController@returnUrl')->name('epusdt-return');
+    Route::get('xunhupay/return_url', 'XunhupayController@returnUrl')->name('xunhupay-return');
+    // Xorpay
+    Route::get('xorpay/{payway}/{orderSN}', 'XorpayController@gateway');
+    Route::post('xorpay/notify_url', 'XorpayController@notifyUrl');
+    Route::get('xorpay/return_url', 'XorpayController@returnUrl')->name('xorpay-return');
 });

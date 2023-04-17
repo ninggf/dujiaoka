@@ -29,6 +29,7 @@
                     @endif
                     {{-- 库存 --}}
                     <span class="badge badge-outline-primary">{{ __('hyper.buy_in_stock') }}({{ $in_stock }})</span>
+                    <span class="badge badge-success-lighten">{{ __('hyper.sales_volume') }} ({{ $sales_volume }})</span>
                     @if($buy_limit_num > 0)
                         <span class="badge badge-outline-dark"> {{__('hyper.buy_purchase_restrictions')}}({{ $buy_limit_num }})</span>
                     @endif

@@ -40,6 +40,7 @@ return [
     'buy_input_account'         => '接收卡密或通知',
     'buy_purchase_quantity'     => '购买数量',
     'buy_in_stock'              => '库存',
+    'sales_volume'              => '已售',
     'buy_purchase_restrictions' => '限购',
     'buy_search_password'       => '查询密码',
     'buy_input_search_password' => '查询订单密码',
