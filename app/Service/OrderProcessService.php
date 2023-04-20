@@ -11,11 +11,12 @@ namespace App\Service;
 
 use App\Exceptions\RuleValidationException;
 use App\Jobs\ApiHook;
+use App\Jobs\BarkPush;
 use App\Jobs\MailSend;
 use App\Jobs\OrderExpired;
 use App\Jobs\ServerJiang;
 use App\Jobs\TelegramPush;
-use App\Jobs\BarkPush;
+use App\Jobs\UtmSourcePush;
 use App\Jobs\WorkWeiXinPush;
 use App\Models\BaseModel;
 use App\Models\Coupon;
@@ -30,13 +31,12 @@ use Illuminate\Support\Str;
  *
  * Class OrderProcessService
  * @package App\Service
- * @author: Assimon
- * @email: Ashang@utf8.hk
- * @blog: https://utf8.hk
+ * @author  : Assimon
+ * @email   : Ashang@utf8.hk
+ * @blog    : https://utf8.hk
  * Date: 2021/5/30
  */
-class OrderProcessService
-{
+class OrderProcessService {
 
     const PENDING_CACHE_KEY = 'PENDING_ORDERS_LIST';
 
@@ -118,60 +118,57 @@ class OrderProcessService
      */
     private $payID;
 
-    public function __construct()
-    {
-        $this->couponService = app('Service\CouponService');
-        $this->orderService = app('Service\OrderService');
-        $this->carmisService = app('Service\CarmisService');
+    public function __construct() {
+        $this->couponService   = app('Service\CouponService');
+        $this->orderService    = app('Service\OrderService');
+        $this->carmisService   = app('Service\CarmisService');
         $this->emailtplService = app('Service\EmailtplService');
-        $this->goodsService = app('Service\GoodsService');
+        $this->goodsService    = app('Service\GoodsService');
 
     }
 
     /**
      * 设置支付方式
+     *
      * @param int $payID
      */
-    public function setPayID(int $payID): void
-    {
+    public function setPayID(int $payID): void {
         $this->payID = $payID;
     }
 
-
-
     /**
      * 下单ip
+     *
      * @param mixed $buyIP
      */
-    public function setBuyIP($buyIP): void
-    {
+    public function setBuyIP($buyIP): void {
         $this->buyIP = $buyIP;
     }
 
     /**
      * 设置查询密码
+     *
      * @param mixed $searchPwd
      */
-    public function setSearchPwd($searchPwd): void
-    {
+    public function setSearchPwd($searchPwd): void {
         $this->searchPwd = $searchPwd;
     }
 
     /**
      * 设置购买数量
+     *
      * @param mixed $buyAmount
      */
-    public function setBuyAmount($buyAmount): void
-    {
+    public function setBuyAmount($buyAmount): void {
         $this->buyAmount = $buyAmount;
     }
 
     /**
      * 设置下单邮箱
+     *
      * @param mixed $email
      */
-    public function setEmail($email): void
-    {
+    public function setEmail($email): void {
         $this->email = $email;
     }
 
@@ -184,8 +181,7 @@ class OrderProcessService
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public function setGoods(Goods $goods)
-    {
+    public function setGoods(Goods $goods) {
         $this->goods = $goods;
     }
 
@@ -198,8 +194,7 @@ class OrderProcessService
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public function setCoupon(?Coupon $coupon)
-    {
+    public function setCoupon(?Coupon $coupon) {
         $this->coupon = $coupon;
     }
 
@@ -212,8 +207,7 @@ class OrderProcessService
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public function setOtherIpt(?string $otherIpt)
-    {
+    public function setOtherIpt(?string $otherIpt) {
         $this->otherIpt = $otherIpt;
     }
 
@@ -226,13 +220,13 @@ class OrderProcessService
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    private function calculateTheCouponPrice(): float
-    {
+    private function calculateTheCouponPrice(): float {
         $couponPrice = 0;
         // 优惠码优惠价格
         if ($this->coupon) {
-            $couponPrice =  $this->coupon->discount;
+            $couponPrice = $this->coupon->discount;
         }
+
         return $couponPrice;
     }
 
@@ -244,9 +238,8 @@ class OrderProcessService
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    private function calculateTheWholesalePrice(): float
-    {
-        $wholesalePrice = 0; // 优惠单价
+    private function calculateTheWholesalePrice(): float {
+        $wholesalePrice      = 0; // 优惠单价
         $wholesaleTotalPrice = 0; // 优惠总价
         if ($this->goods->wholesale_price_cnf) {
             $formatWholesalePrice = format_wholesale_price($this->goods->wholesale_price_cnf);
@@ -256,11 +249,12 @@ class OrderProcessService
                 }
             }
         }
-        if ($wholesalePrice > 0 ) {
-            $totalPrice = $this->calculateTheTotalPrice(); // 实际原总价
-            $newTotalPrice = bcmul($wholesalePrice, $this->buyAmount, 2); // 批发价优惠后的总价
+        if ($wholesalePrice > 0) {
+            $totalPrice          = $this->calculateTheTotalPrice(); // 实际原总价
+            $newTotalPrice       = bcmul($wholesalePrice, $this->buyAmount, 2); // 批发价优惠后的总价
             $wholesaleTotalPrice = bcsub($totalPrice, $newTotalPrice, 2); // 批发总优惠
         }
+
         return $wholesaleTotalPrice;
     }
 
@@ -272,31 +266,32 @@ class OrderProcessService
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    private function calculateTheTotalPrice(): float
-    {
+    private function calculateTheTotalPrice(): float {
         $price = $this->goods->actual_price;
+
         return bcmul($price, $this->buyAmount, 2);
     }
 
     /**
      * 计算实际需要支付的价格
      *
-     * @param float $totalPrice 总价
-     * @param float $couponPrice 优惠码优惠价
+     * @param float $totalPrice     总价
+     * @param float $couponPrice    优惠码优惠价
      * @param float $wholesalePrice 批发优惠
+     *
      * @return float
      *
      * @author    assimon<ashang@utf8.hk>
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    private function calculateTheActualPrice(float $totalPrice, float $couponPrice, float $wholesalePrice): float
-    {
+    private function calculateTheActualPrice(float $totalPrice, float $couponPrice, float $wholesalePrice): float {
         $actualPrice = bcsub($totalPrice, $couponPrice, 2);
         $actualPrice = bcsub($actualPrice, $wholesalePrice, 2);
         if ($actualPrice <= 0) {
             $actualPrice = 0;
         }
+
         return $actualPrice;
     }
 
@@ -309,8 +304,7 @@ class OrderProcessService
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public function createOrder(): Order
-    {
+    public function createOrder(): Order {
         try {
             $order = new Order();
             // 生成订单号
@@ -345,11 +339,7 @@ class OrderProcessService
             // 订单总价
             $order->total_price = $this->calculateTheTotalPrice();
             // 订单实际需要支付价格
-            $order->actual_price = $this->calculateTheActualPrice(
-                $this->calculateTheTotalPrice(),
-                $this->calculateTheCouponPrice(),
-                $this->calculateTheWholesalePrice()
-            );
+            $order->actual_price = $this->calculateTheActualPrice($this->calculateTheTotalPrice(), $this->calculateTheCouponPrice(), $this->calculateTheWholesalePrice());
             // 保存订单
             $order->save();
             // 如果有用到优惠券
@@ -362,6 +352,7 @@ class OrderProcessService
             // 将订单加入队列 x分钟后过期
             $expiredOrderDate = dujiaoka_config_get('order_expire_time', 5);
             OrderExpired::dispatch($order->order_sn)->delay(Carbon::now()->addMinutes($expiredOrderDate));
+
             return $order;
         } catch (\Exception $exception) {
             throw new RuleValidationException($exception->getMessage());
@@ -369,21 +360,20 @@ class OrderProcessService
 
     }
 
-
     /**
      * 订单成功方法
      *
-     * @param string $orderSN 订单号
-     * @param float $actualPrice 实际支付金额
-     * @param string $tradeNo 第三方订单号
+     * @param string $orderSN     订单号
+     * @param float  $actualPrice 实际支付金额
+     * @param string $tradeNo     第三方订单号
+     *
      * @return Order
      *
      * @author    assimon<ashang@utf8.hk>
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public function completedOrder(string $orderSN, float $actualPrice, string $tradeNo = '')
-    {
+    public function completedOrder(string $orderSN, float $actualPrice, string $tradeNo = '') {
         DB::beginTransaction();
         try {
             // 得到订单详情
@@ -401,7 +391,7 @@ class OrderProcessService
                 throw new \Exception(__('dujiaoka.prompt.order_inconsistent_amounts'));
             }
             $order->actual_price = $actualPrice;
-            $order->trade_no = $tradeNo;
+            $order->trade_no     = $tradeNo;
             // 区分订单类型
             // 自动发货
             if ($order->type == Order::AUTOMATIC_DELIVERY) {
@@ -428,8 +418,11 @@ class OrderProcessService
             if (dujiaoka_config_get('is_open_qywxbot_push', 0) == BaseModel::STATUS_OPEN) {
                 WorkWeiXinPush::dispatch($order);
             }
+            // 推送通知
+            UtmSourcePush::dispatch($order, 0, 1);
             // 回调事件
             ApiHook::dispatch($order);
+
             return $completedOrder;
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -441,14 +434,14 @@ class OrderProcessService
      * 手动处理的订单.
      *
      * @param Order $order 订单
+     *
      * @return Order 订单
      *
      * @author    assimon<ashang@utf8.hk>
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public function processManual(Order $order)
-    {
+    public function processManual(Order $order) {
         // 设置订单为待处理
         $order->status = Order::STATUS_PENDING;
         // 保存订单
@@ -456,23 +449,24 @@ class OrderProcessService
         // 商品库存减去
         $this->goodsService->inStockDecr($order->goods_id, $order->buy_amount);
         // 邮件数据
-        $mailData = [
-            'created_at' => $order->create_at,
+        $mailData   = [
+            'created_at'   => $order->create_at,
             'product_name' => $order->goods->gd_name,
-            'webname' => dujiaoka_config_get('text_logo', '独角数卡'),
-            'weburl' => config('app.url') ?? 'http://dujiaoka.com',
-            'ord_info' => str_replace(PHP_EOL, '<br/>', $order->info),
-            'ord_title' => $order->title,
-            'order_id' => $order->order_sn,
-            'buy_amount' => $order->buy_amount,
-            'ord_price' => $order->actual_price,
-            'created_at' => $order->created_at,
+            'webname'      => dujiaoka_config_get('text_logo', '独角数卡'),
+            'weburl'       => config('app.url') ?? 'http://dujiaoka.com',
+            'ord_info'     => str_replace(PHP_EOL, '<br/>', $order->info),
+            'ord_title'    => $order->title,
+            'order_id'     => $order->order_sn,
+            'buy_amount'   => $order->buy_amount,
+            'ord_price'    => $order->actual_price,
+            'created_at'   => $order->created_at,
         ];
-        $tpl = $this->emailtplService->detailByToken('manual_send_manage_mail');
-        $mailBody = replace_mail_tpl($tpl, $mailData);
+        $tpl        = $this->emailtplService->detailByToken('manual_send_manage_mail');
+        $mailBody   = replace_mail_tpl($tpl, $mailData);
         $manageMail = dujiaoka_config_get('manage_email', '');
         // 邮件发送
         MailSend::dispatch($manageMail, $mailBody['tpl_name'], $mailBody['tpl_content']);
+
         return $order;
     }
 
@@ -480,46 +474,48 @@ class OrderProcessService
      * 处理自动发货.
      *
      * @param Order $order 订单
+     *
      * @return Order 订单
      *
      * @author    assimon<ashang@utf8.hk>
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public function processAuto(Order $order): Order
-    {
+    public function processAuto(Order $order): Order {
         // 获得卡密
         $carmis = $this->carmisService->withGoodsByAmountAndStatusUnsold($order->goods_id, $order->buy_amount);
         // 实际可使用的库存已经少于购买数量了
         if (count($carmis) != $order->buy_amount) {
-            $order->info = __('dujiaoka.prompt.order_carmis_insufficient_quantity_available');
+            $order->info   = __('dujiaoka.prompt.order_carmis_insufficient_quantity_available');
             $order->status = Order::STATUS_ABNORMAL;
             $order->save();
+
             return $order;
         }
-        $carmisInfo = array_column($carmis, 'carmi');
-        $ids = array_column($carmis, 'id');
-        $order->info = implode(PHP_EOL, $carmisInfo);
+        $carmisInfo    = array_column($carmis, 'carmi');
+        $ids           = array_column($carmis, 'id');
+        $order->info   = implode(PHP_EOL, $carmisInfo);
         $order->status = Order::STATUS_COMPLETED;
         $order->save();
         // 将卡密设置为已售出
         $this->carmisService->soldByIDS($ids);
         // 邮件数据
         $mailData = [
-            'created_at' => $order->create_at,
+            'created_at'   => $order->create_at,
             'product_name' => $order->goods->gd_name,
-            'webname' => dujiaoka_config_get('text_logo', '独角数卡'),
-            'weburl' => config('app.url') ?? 'http://dujiaoka.com',
-            'ord_info' => implode('<br/>', $carmisInfo),
-            'ord_title' => $order->title,
-            'order_id' => $order->order_sn,
-            'buy_amount' => $order->buy_amount,
-            'ord_price' => $order->actual_price,
+            'webname'      => dujiaoka_config_get('text_logo', '独角数卡'),
+            'weburl'       => config('app.url') ?? 'http://dujiaoka.com',
+            'ord_info'     => implode('<br/>', $carmisInfo),
+            'ord_title'    => $order->title,
+            'order_id'     => $order->order_sn,
+            'buy_amount'   => $order->buy_amount,
+            'ord_price'    => $order->actual_price,
         ];
-        $tpl = $this->emailtplService->detailByToken('card_send_user_email');
+        $tpl      = $this->emailtplService->detailByToken('card_send_user_email');
         $mailBody = replace_mail_tpl($tpl, $mailData);
         // 邮件发送
         MailSend::dispatch($order->email, $mailBody['tpl_name'], $mailBody['tpl_content']);
+
         return $order;
     }
 

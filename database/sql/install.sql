@@ -483,6 +483,35 @@ INSERT INTO `pays` VALUES (20, 'V 免签微信', 'vwx', 1, 1, 'V 免签通讯密
 INSERT INTO `pays` VALUES (21, 'Stripe[微信支付宝]', 'stripe', 1, 1, 'pk开头的可发布密钥', NULL, 'sk开头的密钥', 'pay/stripe', 1, '2020-10-29 13:15:56', '2020-10-29 13:18:29', NULL);
 INSERT INTO `pays` VALUES (22, 'Coinbase[加密货币]', 'coinbase', 1, 3, '费率', 'API密钥', '共享密钥', 'pay/coinbase', 0, '2021-08-15 13:15:56', '2021-10-12 13:15:56', NULL);
 INSERT INTO `pays` VALUES (23, 'Epusdt[trc20]', 'epusdt', 1, 3, 'API密钥', '不填即可', 'api请求地址', 'pay/epusdt', 0, '2022-03-22 13:15:56', '2022-03-22 13:15:56', NULL);
+INSERT INTO `pays` VALUES (24,'虎皮椒-微信扫码', 'xunhupay', 2, 3, '', '不填即可', '', '/pay/xunhupay', 0, '2023-04-16 15:29:39', '2023-04-16 15:50:11', null);
+INSERT INTO `pays` VALUES (25, 'XOR-支付宝扫码', 'xorpay', 2, 1, '', '不填即可', '', '/pay/xorpay', 0, '2023-04-17 10:23:42', '2023-04-17 10:23:44', null);
+
+
+create table orders_utm
+(
+    order_id   bigint       not null comment '订单ID'
+        primary key,
+    order_sn   varchar(150) not null comment '订单SN',
+    utm_source varchar(32)  not null comment '渠道',
+    utm_medium varchar(32)  null comment '媒体',
+    phone      varchar(11)  null comment '手机',
+    notify_url text         null comment '通知地址',
+    created_at timestamp    null,
+    updated_at timestamp    null,
+    deleted_at timestamp    null,
+    constraint FK_ORDER_ID
+        foreign key (order_id) references orders (id)
+            on update cascade on delete cascade
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci comment '订单来源记录表';
+
+create index IDX_ORDER_SN
+    on orders_utm (order_sn);
+
+create index IDX_UTM_MEDIUM
+    on orders_utm (utm_medium);
+
+create index IDX_UTM_SOURCE
+    on orders_utm (utm_source);
 
 -- ----------------------------
 COMMIT;

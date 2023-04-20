@@ -5,8 +5,7 @@ namespace App\Models;
 use App\Events\OrderUpdated;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Order extends BaseModel
-{
+class Order extends BaseModel {
 
     use SoftDeletes;
 
@@ -40,7 +39,7 @@ class Order extends BaseModel
     /**
      * 过期
      */
-    const STATUS_EXPIRED = -1;
+    const STATUS_EXPIRED = - 1;
 
     /**
      * 异常
@@ -61,7 +60,6 @@ class Order extends BaseModel
         'updated' => OrderUpdated::class
     ];
 
-
     /**
      * 状态映射
      *
@@ -71,16 +69,15 @@ class Order extends BaseModel
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public static function getStatusMap()
-    {
+    public static function getStatusMap() {
         return [
-            self::STATUS_WAIT_PAY => admin_trans('order.fields.status_wait_pay'),
-            self::STATUS_PENDING => admin_trans('order.fields.status_pending'),
+            self::STATUS_WAIT_PAY   => admin_trans('order.fields.status_wait_pay'),
+            self::STATUS_PENDING    => admin_trans('order.fields.status_pending'),
             self::STATUS_PROCESSING => admin_trans('order.fields.status_processing'),
-            self::STATUS_COMPLETED => admin_trans('order.fields.status_completed'),
-            self::STATUS_FAILURE => admin_trans('order.fields.status_failure'),
-            self::STATUS_ABNORMAL => admin_trans('order.fields.status_abnormal'),
-            self::STATUS_EXPIRED => admin_trans('order.fields.status_expired')
+            self::STATUS_COMPLETED  => admin_trans('order.fields.status_completed'),
+            self::STATUS_FAILURE    => admin_trans('order.fields.status_failure'),
+            self::STATUS_ABNORMAL   => admin_trans('order.fields.status_abnormal'),
+            self::STATUS_EXPIRED    => admin_trans('order.fields.status_expired')
         ];
     }
 
@@ -93,11 +90,10 @@ class Order extends BaseModel
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public static function getTypeMap()
-    {
+    public static function getTypeMap() {
         return [
             self::AUTOMATIC_DELIVERY => admin_trans('goods.fields.automatic_delivery'),
-            self::MANUAL_PROCESSING => admin_trans('goods.fields.manual_processing')
+            self::MANUAL_PROCESSING  => admin_trans('goods.fields.manual_processing')
         ];
     }
 
@@ -110,8 +106,7 @@ class Order extends BaseModel
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public function goods()
-    {
+    public function goods() {
         return $this->belongsTo(Goods::class, 'goods_id');
     }
 
@@ -124,8 +119,7 @@ class Order extends BaseModel
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public function coupon()
-    {
+    public function coupon() {
         return $this->belongsTo(Coupon::class, 'coupon_id');
     }
 
@@ -138,9 +132,17 @@ class Order extends BaseModel
      * @copyright assimon<ashang@utf8.hk>
      * @link      http://utf8.hk/
      */
-    public function pay()
-    {
+    public function pay() {
         return $this->belongsTo(Pay::class, 'pay_id');
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @author Leo Ning <windywany@gmail.com>
+     * @date   2023-04-20 15:12:05
+     * @since  1.0.0
+     */
+    public function utm() {
+        return $this->hasOne(OrderUtm::class, 'order_id', 'id');
+    }
 }

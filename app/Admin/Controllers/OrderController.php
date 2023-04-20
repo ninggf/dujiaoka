@@ -7,36 +7,34 @@ use App\Admin\Actions\Post\Restore;
 use App\Admin\Repositories\Order;
 use App\Models\Coupon;
 use App\Models\Goods;
+use App\Models\Order as OrderModel;
 use App\Models\Pay;
 use Dcat\Admin\Admin;
 use Dcat\Admin\Form;
 use Dcat\Admin\Grid;
-use Dcat\Admin\Show;
 use Dcat\Admin\Http\Controllers\AdminController;
-use App\Models\Order as OrderModel;
+use Dcat\Admin\Show;
 
-class OrderController extends AdminController
-{
-
+class OrderController extends AdminController {
 
     /**
      * Make a grid builder.
      *
      * @return Grid
      */
-    protected function grid()
-    {
-        return Grid::make(new Order(['goods', 'coupon', 'pay']), function (Grid $grid) {
+    protected function grid() {
+        return Grid::make(new Order(['goods', 'coupon', 'pay', 'utm']), function (Grid $grid) {
             $grid->model()->orderBy('id', 'DESC');
             $grid->column('id')->sortable();
             $grid->column('order_sn')->copyable();
             $grid->column('title');
-            $grid->column('type')->using(OrderModel::getTypeMap())
-                ->label([
-                    OrderModel::AUTOMATIC_DELIVERY => Admin::color()->success(),
-                    OrderModel::MANUAL_PROCESSING => Admin::color()->info(),
-                ]);
+            $grid->column('type')->using(OrderModel::getTypeMap())->label([
+                OrderModel::AUTOMATIC_DELIVERY => Admin::color()->success(),
+                OrderModel::MANUAL_PROCESSING  => Admin::color()->info(),
+            ]);
             $grid->column('email')->copyable();
+            $grid->column('utm.utm_source', '渠道');
+            $grid->column('utm.utm_medium', '媒体');
             $grid->column('goods.gd_name', admin_trans('order.fields.goods_id'));
             $grid->column('goods_price');
             $grid->column('buy_amount');
@@ -49,8 +47,7 @@ class OrderController extends AdminController
             $grid->column('buy_ip');
             $grid->column('search_pwd')->copyable();
             $grid->column('trade_no')->copyable();
-            $grid->column('status')
-                ->select(OrderModel::getStatusMap());
+            $grid->column('status')->select(OrderModel::getStatusMap());
             $grid->column('created_at');
             $grid->column('updated_at')->sortable();
             $grid->disableCreateButton();
@@ -64,19 +61,23 @@ class OrderController extends AdminController
                 $filter->equal('goods_id')->select(Goods::query()->pluck('gd_name', 'id'));
                 $filter->equal('coupon_id')->select(Coupon::query()->pluck('coupon', 'id'));
                 $filter->equal('pay_id')->select(Pay::query()->pluck('pay_name', 'id'));
+                $filter->equal('utm.utm_source', '渠道');
+                $filter->equal('utm.utm_medium', '媒体');
+
                 $filter->whereBetween('created_at', function ($q) {
                     $start = $this->input['start'] ?? null;
-                    $end = $this->input['end'] ?? null;
-                    $q->where('created_at', '>=', $start)
-                        ->where('created_at', '<=', $end);
+                    $end   = $this->input['end'] ?? null;
+                    $q->where('created_at', '>=', $start)->where('created_at', '<=', $end);
                 })->datetime();
                 $filter->scope(admin_trans('dujiaoka.trashed'))->onlyTrashed();
             });
+
             $grid->actions(function (Grid\Displayers\Actions $actions) {
                 if (request('_scope_') == admin_trans('dujiaoka.trashed')) {
                     $actions->append(new Restore(OrderModel::class));
                 }
             });
+
             $grid->batchActions(function (Grid\Tools\BatchActions $batch) {
                 if (request('_scope_') == admin_trans('dujiaoka.trashed')) {
                     $batch->add(new BatchRestore(OrderModel::class));
@@ -92,13 +93,15 @@ class OrderController extends AdminController
      *
      * @return Show
      */
-    protected function detail($id)
-    {
-        return Show::make($id, new Order(['goods', 'coupon', 'pay']), function (Show $show) {
+    protected function detail($id) {
+        return Show::make($id, new Order(['goods', 'coupon', 'pay', 'utm']), function (Show $show) {
             $show->field('id');
             $show->field('order_sn');
             $show->field('title');
             $show->field('email');
+            $show->field('utm.utm_source', '渠道');
+            $show->field('utm.utm_medium', '媒体');
+            $show->field('utm.phone', '媒体手机');
             $show->field('goods.gd_name', admin_trans('order.fields.goods_id'));
             $show->field('goods_price');
             $show->field('buy_amount');
@@ -109,7 +112,7 @@ class OrderController extends AdminController
             $show->field('actual_price');
             $show->field('buy_ip');
             $show->field('info')->unescape()->as(function ($info) {
-                return  "<textarea class=\"form-control field_wholesale_price_cnf _normal_\"  rows=\"10\" cols=\"30\">" . $info . "</textarea>";
+                return "<textarea class=\"form-control field_wholesale_price_cnf _normal_\"  rows=\"10\" cols=\"30\">" . $info . "</textarea>";
             });
             $show->field('pay.pay_name', admin_trans('order.fields.pay_id'));
             $show->field('status')->using(OrderModel::getStatusMap());
@@ -118,6 +121,7 @@ class OrderController extends AdminController
             $show->field('type')->using(OrderModel::getTypeMap());
             $show->field('created_at');
             $show->field('updated_at');
+            $show->field('utm.notify_url', '通知地址');
             $show->disableEditButton();
         });
     }
@@ -127,8 +131,7 @@ class OrderController extends AdminController
      *
      * @return Form
      */
-    protected function form()
-    {
+    protected function form() {
         return Form::make(new Order(['goods', 'coupon', 'pay']), function (Form $form) {
             $form->display('id');
             $form->display('order_sn');

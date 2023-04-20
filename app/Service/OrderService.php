@@ -116,7 +116,7 @@ class OrderService
         }
         return $goods;
     }
-	
+
     /**
      * 判断是否有循环卡密
      *
@@ -286,5 +286,4 @@ class OrderService
             ->take(5)
             ->get();
     }
-
 }

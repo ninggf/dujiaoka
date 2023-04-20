@@ -25,9 +25,11 @@
         qqpay      : qqSvg,
         paypal     : paypal,
         mgcoin     : otherSvg,
-        coinbase   : coinbaseSvg,		
+        coinbase   : coinbaseSvg,
         vzfb       : alipaySvg,
         vwx        : weChatSvg,
+        xorpay     : alipaySvg,
+        xunhupay   : weChatSvg
     };
 
     let msgArea = w.clientWidth <= 768 ? ['85%'] : ['50%'];

@@ -27,6 +27,8 @@ $(function() {
 		epusdt     : epusdtSvg,
 		vzfb       : alipaySvg,
 		vwx        : weChatSvg,
+        xorpay     : alipaySvg,
+        xunhupay   : weChatSvg
 	};
 	// 付款方式按钮
 	$('.pay-type').each(function () {

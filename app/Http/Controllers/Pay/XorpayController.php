@@ -15,6 +15,7 @@ class XorpayController extends PayController {
             $config    = $this->getConfig($orderSN, $payway);
             $orderID   = $this->order->order_sn;
             $notifyUrl = url($this->payGateway->pay_handleroute . '/notify_url');
+            $notifyUrl = env('APP_URL') . '/test' . $this->payGateway->pay_handleroute . '/notify_url';
             //$returnUrl = url('detail-order-sn', ['orderSN' => $this->order->order_sn]);
             $expire = dujiaoka_config_get('order_expire_time', 5) * 60;
             $data   = [
